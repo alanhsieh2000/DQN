@@ -1,12 +1,12 @@
 # Function Approximation
 In MDP problems with large number of states, methods which need to estimate action-value of all state-action pairs, called tabular methods, 
-are impractical. Value function approximation (VFA) with parameterized form, $\^{v}(s_t, w), \^{q}(s_t, a_t, w)$, is more suitable in this case. 
+are impractical. Value function approximation (VFA) with parameterized form, $\hat{v}(s_t, w), \hat{q}(s_t, a_t, w)$, is more suitable in this case. 
 Among many function approximators, neural network is the most promising one. Because it is differentiable, stochastic gradient decent optimizers 
 that are provided in deep learning frameworks like PyTorch and TensorFlow can be used to minimize the loss function
 
 $${\begin{align}
-  J(w) &= E_\pi[(v_\pi(S) - \^{v}(S, w))^2], \text{or} \notag &\\
-  J(w) &= E_\pi[(q_\pi(S, A) - \^{q}(S, A, w))^2] \notag &\\
+  J(w) &= E_\pi[(v_\pi(S) - \hat{v}(S, w))^2], \text{or} \notag &\\
+  J(w) &= E_\pi[(q_\pi(S, A) - \hat{q}(S, A, w))^2] \notag &\\
 \end{align}}$$
 
 For gradient decent minimizers, we want to change $w$ in the opposite direction of $\bigtriangledown J(w)$ so that $J(w + \Delta w)$ is less 
@@ -14,20 +14,20 @@ than $J(w)$. We can set
 
 $${\begin{align}
    \Delta w &= - \frac{1}{2} \alpha \cdot \bigtriangledown J(w) \notag &\\
-   &= \alpha \cdot E_\pi[(q_\pi(S, A) - \^{q}(S, A, w)) \cdot \bigtriangledown \^{q}(S, A, w)] \notag &\\
+   &= \alpha \cdot E_\pi[(q_\pi(S, A) - \hat{q}(S, A, w)) \cdot \bigtriangledown \hat{q}(S, A, w)] \notag &\\
 \end{align}}$$
 
 For MC, the estimation of $q_\pi(S_t, A_t)$ is $G_t$, so we have
 
-$${\Delta w = \alpha \cdot E_\pi[(G_t - \^{q}(S_t, A_t, w)) \cdot \bigtriangledown \^{q}(S_t, A_t, w)]}$$
+$${\Delta w = \alpha \cdot E_\pi[(G_t - \hat{q}(S_t, A_t, w)) \cdot \bigtriangledown \hat{q}(S_t, A_t, w)]}$$
 
 For TD(0), the estimation of $q_\pi(S_t, A_t)$ is $R_{t+1} + \gamma \cdot Q(S_{t+1}, A_{t+1})$, so we have 
 
-$${\Delta w = \alpha \cdot E_\pi[(R_{t+1} + \gamma \cdot \^{q}(S_{t+1}, A_{t+1}, w) - \^{q}(S_t, A_t, w)) \cdot \bigtriangledown \^{q}(S_t, A_t, w)]}$$
+$${\Delta w = \alpha \cdot E_\pi[(R_{t+1} + \gamma \cdot \hat{q}(S_{t+1}, A_{t+1}, w) - \hat{q}(S_t, A_t, w)) \cdot \bigtriangledown \hat{q}(S_t, A_t, w)]}$$
 
 For Q-learning, the estimation of $q_\pi(S_t, A_t)$ is $R_{t+1} + \gamma \cdot \max_a Q(S_{t+1}, a)$, so we have 
 
-$${\Delta w = \alpha \cdot E_\pi[(R_{t+1} + \gamma \cdot \max_a \^{q}(S_{t+1}, a, w) - \^{q}(S_t, A_t, w)) \cdot \bigtriangledown \^{q}(S_t, A_t, w)]}$$
+$${\Delta w = \alpha \cdot E_\pi[(R_{t+1} + \gamma \cdot \max_a \hat{q}(S_{t+1}, a, w) - \hat{q}(S_t, A_t, w)) \cdot \bigtriangledown \hat{q}(S_t, A_t, w)]}$$
 
 # Deep Q-learning
 Deep Q-learning (DQN) is Q-learning with function approximation, using a deep neural network as its function approximator (Mnih, 2013). To make 
@@ -55,8 +55,8 @@ the algorithm stable, DQN use
     - The value of rewards, $r_{t+1}$, is clipped to 1 if the original reward of that game is positive, -1 if it is negative, and 0 otherwise.
     - N is one million frames, 250,000 experience tuples.
 4. two parameter copies
-    - The copy of learnable parameter $w$ is used by $\^{q}(S_t, A_t, w)$.
-    - The copy of non-learnable parameter $w^\prime$ is ued by $\^{q}(S_{t+1}, a, w^\prime)$.
+    - The copy of learnable parameter $w$ is used by $\hat{q}(S_t, A_t, w)$.
+    - The copy of non-learnable parameter $w^\prime$ is ued by $\hat{q}(S_{t+1}, a, w^\prime)$.
     - In practical, the value of $w^\prime$ is replaced the value of $w$ every 50 training steps.
 5. training
     - RMSProp is used.
@@ -69,19 +69,19 @@ the algorithm stable, DQN use
     - The loss function is
 
 $${\begin{align}
-  J(w) &= \frac{1}{N} \cdot \sum_{i=0}^{N-1}(y_i - \^{q}(s_{i,t}, a_{i,t}, w))^2, \notag &\\
+  J(w) &= \frac{1}{N} \cdot \sum_{i=0}^{N-1}(y_i - \hat{q}(s_{i,t}, a_{i,t}, w))^2, \notag &\\
   &\text{where } y_i = \begin{cases}
     r_{i,t+1}, &\text{ if } s_{i,t+1} = s_T, \notag &\\
-    r_{i,t+1} + \gamma \cdot \max_a \^{q}(s_{i,t+1}, a, w^\prime), &\text{ otherwise} \notag &\\
+    r_{i,t+1} + \gamma \cdot \max_a \hat{q}(s_{i,t+1}, a, w^\prime), &\text{ otherwise} \notag &\\
   \end{cases}
 \end{align}}$$
 
 Here is the algorithm
 
 1. Initialize $D$ and burn in with $N$ experience tuples by random policy
-2. Initialize $\^{q}_w$ and its clone $\^{q}_{w^\prime}$.
+2. Initialize $\hat{q}_w$ and its clone $\hat{q}_{w^\prime}$.
 3. Initialize c = 0
-4. Initialize behavior policy $b(s_t)$ as $\epsilon$-greedy with $\^{q}_w$ and the initial $\epsilon$
+4. Initialize behavior policy $b(s_t)$ as $\epsilon$-greedy with $\hat{q}_w$ and the initial $\epsilon$
 4. repeat for training episodes
     - Initialize $s_t = s_0$
     - $\phi_0 = \phi(s_0)$
@@ -90,7 +90,7 @@ Here is the algorithm
         - take action $a_t$ and observe $r_{t+1}, s_{t+1}$
         - store $(\phi(s_t), a_t, r_{t+1}, \phi(s_{t+1}))$ in $D$
         - sample a mini-batch with size N from $D$
-        - calculate $y_i$ for all samples in the mini-batch, using $\^{q}_{w^\prime}$
+        - calculate $y_i$ for all samples in the mini-batch, using $\hat{q}_{w^\prime}$
         - update $\^q_w$ using $RMSProp(\bigtriangledown J(w))$
         - c = c + 1
         - replace $w^\prime$ with $w$ if c % target_update = 0
